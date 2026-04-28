@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef struct {
     int id;
@@ -7,26 +8,31 @@ typedef struct {
     int completion;
     int waiting;
     int turnaround;
+
+    int remaining; // for round robin
 } Process;
 
-void fcfs(Process p[], int n);
+void fcfs(Process *p, int n);
+void round_robin(Process *p, int n, int quantum);
 void print_results(Process p[], int n);
 void print_gantt(Process p[], int n);
 
 int main() {
-    Process p[] = {
-        {1, 0, 4, 0, 0, 0},
-        {2, 1, 3, 0, 0, 0},
-        {3, 2, 1, 0, 0, 0}
-    };
-
+    Process *p;
     int n = 3; // 3 processes
+    int quantum = 2; // for round robin
+    p = malloc(n * sizeof(Process));
+    p[0] = (Process){1, 0, 4, 0, 0, 0, 4};
+    p[1] = (Process){2, 1, 3, 0, 0, 0, 3};
+    p[2] = (Process){3, 2, 1, 0, 0, 0, 1};
     
     fcfs(p, n);
+    //round_robin(p, n, quantum);
     print_results(p, n);
     print_gantt(p, n);
     
 
+    free(p);
     return 0;
 }
 
@@ -45,7 +51,37 @@ void fcfs(Process p[], int n) {
     }
 }
 
-void print_results(Process p[], int n) {
+void round_robin(Process *p, int n, int quantum) {
+    int time = 0;
+    int done;
+
+    do {
+        done = 1;
+
+        for (int i = 0; i < n; i++) {
+            if (p[i].remaining > 0) {
+                done = 0;
+
+                if (p[i].remaining > quantum) {
+                    time += quantum;
+                    p[i].remaining -= quantum;
+                } else {
+                    time += p[i].remaining;
+                    p[i].remaining = 0;
+
+                    p[i].completion = time;
+                }
+            }
+        }
+    } while (!done);
+
+    for (int i = 0; i < n; i++) {
+        p[i].turnaround = p[i].completion - p[i].arrival;
+        p[i].waiting = p[i].turnaround - p[i].burst;
+    }
+}
+
+void print_results(Process *p, int n) {
     float total_wt = 0, total_tat = 0, total_bt = 0;
     printf("\n\t\tID\tAT\tBT\tCT\tWT\tTAT\n");
 
@@ -65,7 +101,12 @@ void print_results(Process p[], int n) {
 
     float avg_wt = total_wt / n;
     float avg_tat = total_tat / n;
-    float total_time = p[n - 1].completion;
+    float total_time = 0;
+    for (int i = 0; i < n; i++) {
+        if (p[i].completion > total_time) {
+            total_time = p[i].completion;
+        }
+    }
 
     float cpu_util = (total_bt / total_time) * 100;
 
