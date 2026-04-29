@@ -14,25 +14,47 @@ typedef struct {
 
 void fcfs(Process *p, int n);
 void round_robin(Process *p, int n, int quantum);
-void print_results(Process p[], int n);
+void print_results(Process *p, int n, float *avg_wt, float *avg_tat);
 void print_gantt(Process p[], int n);
 
 int main() {
-    Process *p;
+    float fcfs_wt, fcfs_tat;
+    float rr_wt, rr_tat;
     int n = 3; // 3 processes
+    Process *p_fcfs = malloc(n * sizeof(Process));
+    Process *p_rr = malloc(n * sizeof(Process));
+
     int quantum = 2; // for round robin
-    p = malloc(n * sizeof(Process));
-    p[0] = (Process){1, 0, 4, 0, 0, 0, 4};
-    p[1] = (Process){2, 1, 3, 0, 0, 0, 3};
-    p[2] = (Process){3, 2, 1, 0, 0, 0, 1};
+    p_fcfs[0] = (Process){1, 0, 4, 0, 0, 0, 4};
+    p_fcfs[1] = (Process){2, 1, 3, 0, 0, 0, 3};
+    p_fcfs[2] = (Process){3, 2, 1, 0, 0, 0, 1};
     
-    fcfs(p, n);
-    //round_robin(p, n, quantum);
-    print_results(p, n);
-    print_gantt(p, n);
+    for (int i = 0; i < n; i++) {
+        p_rr[i] = p_fcfs[i];
+    }
+
+    fcfs(p_fcfs, n);
+    round_robin(p_rr, n, quantum);
+
+    printf("FCFS\n");
+    print_results(p_fcfs, n, &fcfs_wt, &fcfs_tat);
+
+    printf("RR\n");
+    print_results(p_rr, n, &rr_wt, &rr_tat);
+
+    float wt_change = ((fcfs_wt - rr_wt) / fcfs_wt) * 100;
+    float tat_change = ((fcfs_tat - rr_tat) / fcfs_tat) * 100;
+
+    printf("\n\t\tComparison\n"); // positive means RR is better, negative means RR is worse
+    printf("Waiting time change:\t%0.2f%%\n", wt_change);
+    printf("Turnaround time change:\t%0.2f%%\n\n", tat_change);
+
+    print_gantt(p_rr, n);
     
 
-    free(p);
+
+    free(p_fcfs);
+    free(p_rr);
     return 0;
 }
 
@@ -81,7 +103,7 @@ void round_robin(Process *p, int n, int quantum) {
     }
 }
 
-void print_results(Process *p, int n) {
+void print_results(Process *p, int n, float *avg_wt, float *avg_tat) {
     float total_wt = 0, total_tat = 0, total_bt = 0;
     printf("\n\t\tID\tAT\tBT\tCT\tWT\tTAT\n");
 
@@ -99,8 +121,8 @@ void print_results(Process *p, int n) {
         total_bt += p[i].burst;
     }
 
-    float avg_wt = total_wt / n;
-    float avg_tat = total_tat / n;
+    *avg_wt = total_wt / n;
+    *avg_tat = total_tat / n;
     float total_time = 0;
     for (int i = 0; i < n; i++) {
         if (p[i].completion > total_time) {
@@ -110,9 +132,10 @@ void print_results(Process *p, int n) {
 
     float cpu_util = (total_bt / total_time) * 100;
 
-    printf("\nAverage waiting time: %0.2f", avg_wt);
-    printf("\nAverage turnaround time: %0.2f", avg_tat);
+    printf("\nAverage waiting time: %0.2f", *avg_wt);
+    printf("\nAverage turnaround time: %0.2f", *avg_tat);
     printf("\nCPU utilization: %0.2f\n\n", cpu_util);
+
 }
 
 void print_gantt(Process p[], int n) {
