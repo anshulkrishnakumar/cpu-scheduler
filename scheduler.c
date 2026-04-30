@@ -15,19 +15,31 @@ typedef struct {
 void fcfs(Process *p, int n);
 void round_robin(Process *p, int n, int quantum);
 void print_results(Process *p, int n, float *avg_wt, float *avg_tat);
-void print_gantt(Process p[], int n);
 
 int main() {
     float fcfs_wt, fcfs_tat;
     float rr_wt, rr_tat;
-    int n = 3; // 3 processes
+    int n; // number of processes
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
     Process *p_fcfs = malloc(n * sizeof(Process));
     Process *p_rr = malloc(n * sizeof(Process));
-
     int quantum = 2; // for round robin
-    p_fcfs[0] = (Process){1, 0, 4, 0, 0, 0, 4};
-    p_fcfs[1] = (Process){2, 1, 3, 0, 0, 0, 3};
-    p_fcfs[2] = (Process){3, 2, 1, 0, 0, 0, 1};
+
+    for (int i = 0; i < n; i++) {
+        p_fcfs[i].id = i + 1;
+
+        printf("Arrival time for P%d: ", i + 1);
+        scanf("%d", &p_fcfs[i].arrival);
+
+        printf("Burst time for P%d: ", i + 1);
+        scanf("%d", &p_fcfs[i].burst);
+
+        p_fcfs[i].completion = 0;
+        p_fcfs[i].waiting = 0;
+        p_fcfs[i].turnaround = 0;
+        p_fcfs[i].remaining = p_fcfs[i].burst;
+    }
     
     for (int i = 0; i < n; i++) {
         p_rr[i] = p_fcfs[i];
@@ -49,7 +61,6 @@ int main() {
     printf("Waiting time change:\t%0.2f%%\n", wt_change);
     printf("Turnaround time change:\t%0.2f%%\n\n", tat_change);
 
-    print_gantt(p_rr, n);
     
 
 
@@ -58,7 +69,7 @@ int main() {
     return 0;
 }
 
-void fcfs(Process p[], int n) {
+void fcfs(Process *p, int n) {
     int time = 0;
 
     for (int i = 0; i < n; i++) {
@@ -79,10 +90,12 @@ void round_robin(Process *p, int n, int quantum) {
 
     do {
         done = 1;
+        int executed = 0;
 
         for (int i = 0; i < n; i++) {
-            if (p[i].remaining > 0) {
+            if (p[i].remaining > 0 && p[i].arrival <= time) {
                 done = 0;
+                executed = 1;
 
                 if (p[i].remaining > quantum) {
                     time += quantum;
@@ -95,6 +108,12 @@ void round_robin(Process *p, int n, int quantum) {
                 }
             }
         }
+
+        if (!executed) {
+            time++;
+            done = 0;
+        }
+
     } while (!done);
 
     for (int i = 0; i < n; i++) {
@@ -136,15 +155,4 @@ void print_results(Process *p, int n, float *avg_wt, float *avg_tat) {
     printf("\nAverage turnaround time: %0.2f", *avg_tat);
     printf("\nCPU utilization: %0.2f\n\n", cpu_util);
 
-}
-
-void print_gantt(Process p[], int n) {
-    for (int i = 0; i < n; i++) {
-        printf("Process %d | ", p[i].id);
-    }
-    printf("\n0");
-    for (int i = 0; i < n; i++) {
-        printf("\t\t  %d\t", p[i].completion);
-    }
-    printf("\n");
 }
