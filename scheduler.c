@@ -15,7 +15,6 @@ typedef struct {
 void fcfs(Process *p, int n);
 void round_robin(Process *p, int n, int quantum);
 void print_results(Process *p, int n, float *avg_wt, float *avg_tat);
-void print_gantt(Process p[], int n);
 
 int main() {
     float fcfs_wt, fcfs_tat;
@@ -48,11 +47,7 @@ int main() {
     printf("\n\t\tComparison\n"); // positive means RR is better, negative means RR is worse
     printf("Waiting time change:\t%0.2f%%\n", wt_change);
     printf("Turnaround time change:\t%0.2f%%\n\n", tat_change);
-
-    print_gantt(p_rr, n);
     
-
-
     free(p_fcfs);
     free(p_rr);
     return 0;
@@ -136,15 +131,4 @@ void print_results(Process *p, int n, float *avg_wt, float *avg_tat) {
     printf("\nAverage turnaround time: %0.2f", *avg_tat);
     printf("\nCPU utilization: %0.2f\n\n", cpu_util);
 
-}
-
-void print_gantt(Process p[], int n) {
-    for (int i = 0; i < n; i++) {
-        printf("Process %d | ", p[i].id);
-    }
-    printf("\n0");
-    for (int i = 0; i < n; i++) {
-        printf("\t\t  %d\t", p[i].completion);
-    }
-    printf("\n");
 }
