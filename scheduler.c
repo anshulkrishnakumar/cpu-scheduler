@@ -19,15 +19,49 @@ void print_results(Process *p, int n, float *avg_wt, float *avg_tat);
 int main() {
     float fcfs_wt, fcfs_tat;
     float rr_wt, rr_tat;
-    int n = 3; // 3 processes
-    Process *p_fcfs = malloc(n * sizeof(Process));
-    Process *p_rr = malloc(n * sizeof(Process));
 
-    int quantum = 2; // for round robin
-    p_fcfs[0] = (Process){1, 0, 4, 0, 0, 0, 4};
-    p_fcfs[1] = (Process){2, 1, 3, 0, 0, 0, 3};
-    p_fcfs[2] = (Process){3, 2, 1, 0, 0, 0, 1};
-    
+    int n;
+    printf("Enter number of processes: ");
+    if (scanf("%d", &n) != 1 || n <= 0) {
+        printf("Invalid number of processes\n");
+        return 1;
+    }
+
+    Process *p_fcfs = malloc(n * sizeof(Process));
+    Process *p_rr   = malloc(n * sizeof(Process));
+    if (!p_fcfs || !p_rr) {
+        printf("Memory allocation failed\n");
+        return 1;
+    }
+
+    int quantum;
+    printf("Enter time quantum: ");
+    if (scanf("%d", &quantum) != 1 || quantum <= 0) {
+        printf("Invalid quantum\n");
+        return 1;
+    }
+
+    for (int i = 0; i < n; i++) {
+        p_fcfs[i].id = i + 1;
+
+        printf("Arrival time for P%d: ", i + 1);
+        if (scanf("%d", &p_fcfs[i].arrival) != 1 || p_fcfs[i].arrival < 0) {
+            printf("Invalid arrival time\n");
+            return 1;
+        }
+
+        printf("Burst time for P%d: ", i + 1);
+        if (scanf("%d", &p_fcfs[i].burst) != 1 || p_fcfs[i].burst <= 0) {
+            printf("Invalid burst time\n");
+            return 1;
+        }
+
+        p_fcfs[i].completion = 0;
+        p_fcfs[i].waiting = 0;
+        p_fcfs[i].turnaround = 0;
+        p_fcfs[i].remaining = p_fcfs[i].burst;
+    }
+
     for (int i = 0; i < n; i++) {
         p_rr[i] = p_fcfs[i];
     }
@@ -44,10 +78,10 @@ int main() {
     float wt_change = ((fcfs_wt - rr_wt) / fcfs_wt) * 100;
     float tat_change = ((fcfs_tat - rr_tat) / fcfs_tat) * 100;
 
-    printf("\n\t\tComparison\n"); // positive means RR is better, negative means RR is worse
+    printf("\n\t\tComparison\n");
     printf("Waiting time change:\t%0.2f%%\n", wt_change);
     printf("Turnaround time change:\t%0.2f%%\n\n", tat_change);
-    
+
     free(p_fcfs);
     free(p_rr);
     return 0;
@@ -100,10 +134,10 @@ void round_robin(Process *p, int n, int quantum) {
 
 void print_results(Process *p, int n, float *avg_wt, float *avg_tat) {
     float total_wt = 0, total_tat = 0, total_bt = 0;
-    printf("\n\t\tID\tAT\tBT\tCT\tWT\tTAT\n");
+    printf("\n\t\tAT\tBT\tCT\tWT\tTAT\n");
 
     for (int i = 0; i < n; i++) {
-        printf("Process %d\t%d\t%d\t%d\t%d\t%d\n",
+        printf("P%d\t\t%d\t%d\t%d\t%d\t%d\n",
             p[i].id,
             p[i].arrival,
             p[i].burst,
@@ -118,6 +152,7 @@ void print_results(Process *p, int n, float *avg_wt, float *avg_tat) {
 
     *avg_wt = total_wt / n;
     *avg_tat = total_tat / n;
+
     float total_time = 0;
     for (int i = 0; i < n; i++) {
         if (p[i].completion > total_time) {
@@ -130,5 +165,4 @@ void print_results(Process *p, int n, float *avg_wt, float *avg_tat) {
     printf("\nAverage waiting time: %0.2f", *avg_wt);
     printf("\nAverage turnaround time: %0.2f", *avg_tat);
     printf("\nCPU utilization: %0.2f\n\n", cpu_util);
-
 }
