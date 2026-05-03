@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef enum {
+    READY,
+    RUNNING,
+    FINISHED,
+} State;
+
 typedef struct {
     int id;
     int arrival;
@@ -10,6 +16,7 @@ typedef struct {
     int turnaround;
 
     int remaining; // for round robin
+    State state;
 } Process;
 
 void fcfs(Process *p, int n);
@@ -60,6 +67,7 @@ int main() {
         p_fcfs[i].waiting = 0;
         p_fcfs[i].turnaround = 0;
         p_fcfs[i].remaining = p_fcfs[i].burst;
+        p_fcfs[i].state = READY;
     }
 
     for (int i = 0; i < n; i++) {
@@ -94,8 +102,13 @@ void fcfs(Process p[], int n) {
         if (time < p[i].arrival) {
             time = p[i].arrival;            
         }
+
+        p[i].state = RUNNING;
         time += p[i].burst;
         p[i].completion = time; // time at which it finishes
+        p[i].state = FINISHED;
+        
+        
         p[i].turnaround = p[i].completion - p[i].arrival; // time spend in the system
         p[i].waiting = p[i].turnaround - p[i].burst; // time spent waiting for execution
 
@@ -112,6 +125,8 @@ void round_robin(Process *p, int n, int quantum) {
         for (int i = 0; i < n; i++) {
             if (p[i].remaining > 0) {
                 done = 0;
+                
+                p[i].state = RUNNING;
 
                 if (p[i].remaining > quantum) {
                     time += quantum;
@@ -121,6 +136,7 @@ void round_robin(Process *p, int n, int quantum) {
                     p[i].remaining = 0;
 
                     p[i].completion = time;
+                    p[i].state = FINISHED;
                 }
             }
         }
