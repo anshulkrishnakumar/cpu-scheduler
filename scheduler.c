@@ -2,6 +2,17 @@
 #include <stdlib.h>
 #include "scheduler.h"
 
+typedef struct {
+    int data[100];
+    int front;
+    int rear;
+} Queue;
+
+void init_queue(Queue *q);
+int is_empty(Queue *q);
+void enqueue(Queue *q, int value);
+int dequeue(Queue *q);
+
 int main() {
     float fcfs_wt, fcfs_tat;
     float rr_wt, rr_tat;
@@ -96,30 +107,35 @@ void fcfs(Process p[], int n) {
 
 void round_robin(Process *p, int n, int quantum) {
     int time = 0;
-    int done;
 
-    do {
-        done = 1;
+    Queue q;
+    init_queue(&q);
 
-        for (int i = 0; i < n; i++) {
-            if (p[i].remaining > 0) {
-                done = 0;
-                
-                p[i].state = RUNNING;
+    for (int i = 0; i < n; i++) {
+        enqueue(&q, i);
+    }
 
-                if (p[i].remaining > quantum) {
-                    time += quantum;
-                    p[i].remaining -= quantum;
-                } else {
-                    time += p[i].remaining;
-                    p[i].remaining = 0;
+    while (!is_empty(&q)) {
+        int i = dequeue(&q);
 
-                    p[i].completion = time;
-                    p[i].state = FINISHED;
-                }
+        if (p[i].remaining > 0) {
+
+            p[i].state = RUNNING;
+
+            if (p[i].remaining > quantum) {
+                time += quantum;
+                p[i].remaining = p[i].remaining - quantum;
+
+                enqueue(&q, i);
+            } else {
+                time += p[i].remaining;
+                p[i].remaining = 0;
+
+                p[i].completion = time;
+                p[i].state = FINISHED;
             }
         }
-    } while (!done);
+    }
 
     for (int i = 0; i < n; i++) {
         p[i].turnaround = p[i].completion - p[i].arrival;
@@ -160,4 +176,22 @@ void print_results(Process *p, int n, float *avg_wt, float *avg_tat) {
     printf("\nAverage waiting time: %0.2f", *avg_wt);
     printf("\nAverage turnaround time: %0.2f", *avg_tat);
     printf("\nCPU utilization: %0.2f\n\n", cpu_util);
+}
+
+
+void init_queue(Queue *q) {
+    q -> front = 0;
+    q -> rear = -1;
+}
+
+int is_empty(Queue *q) {
+    return q -> front > q -> rear;
+}
+
+void enqueue(Queue *q, int value) {
+    q -> data[++q -> rear] = value;
+}
+
+int dequeue(Queue *q) {
+    return q -> data[q -> front++];
 }
