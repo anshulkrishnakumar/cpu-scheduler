@@ -1,4 +1,4 @@
-# CPU Scheduler (C)
+# CPU Scheduler
 
 ## Overview
 
